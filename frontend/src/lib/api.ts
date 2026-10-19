@@ -1,3 +1,5 @@
+import { obtenerAccessToken } from './msal'
+
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:1419'
 
 export type EstadoInspeccion = 'BORRADOR' | 'ENVIADA'
@@ -72,13 +74,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await obtenerAccessToken()
+  const headers: Record<string, string> = { ...(options.headers as Record<string, string> | undefined) }
+  if (token) headers.Authorization = `Bearer ${token}`
+
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${getStubToken()}`,
-    },
+    headers,
   })
+
+  if (res.status === 401) {
+    const ErrorNoAuth = new ApiError(401, 'Sesión no válida. Vuelve a iniciar sesión.')
+    // limpia storage para forzar nuevo login en el siguiente intento
+    tokensLimpios()
+    throw ErrorNoAuth
+  }
 
   if (!res.ok) {
     let mensaje = res.statusText
@@ -95,9 +105,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>
 }
 
-function getStubToken(): string {
-  // Fase 4.5 lo sustituira por MSAL. De momento un placeholder.
-  return 'stub'
+function tokensLimpios() {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('msal.')) localStorage.removeItem(key)
+    }
+  } catch {
+    // storage no disponible
+  }
 }
 
 export const api = {
