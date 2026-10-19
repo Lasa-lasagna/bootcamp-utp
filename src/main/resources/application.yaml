@@ -17,23 +17,34 @@ spring:
     database-platform: org.hibernate.dialect.SQLServerDialect
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         "[format_sql]": true
-    
-  sql:
-    init:
-      mode: never
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/${TENANT_ID:}/v2.0
+
   cloud:
     azure:
-      active-directory:
-        enabled: true
-        profile:
-          tenant-id: ${TENANT_ID}
-        credential:
-          client-id: ${CLIENT_ID}
-          client-secret: ${CLIENT_SECRET}
+      storage:
+        container-name: ${AZURE_STORAGE_CONTAINER_NAME:inspecciones-fotos}
+        connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+
+app:
+  azure:
+    storage:
+      connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+      container: ${AZURE_STORAGE_CONTAINER_NAME:inspecciones-fotos}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 server:
   port: 1419
@@ -43,4 +54,5 @@ management:
     web:
       exposure:
         include:
-          -metrics
+          - metrics
+          - health
