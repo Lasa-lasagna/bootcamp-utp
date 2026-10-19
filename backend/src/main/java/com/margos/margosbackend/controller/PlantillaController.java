@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/plantillas")
-@RequiredArgsConstructor
+@RequiredArgsConstructor 
 @PreAuthorize("hasAuthority('APPROLE_Admin')")
 public class PlantillaController {
 
